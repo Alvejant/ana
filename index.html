@@ -593,11 +593,12 @@
   let opened = false;
 
   function openCard(){
-    if(opened) return;
-    opened = true;
-    card.classList.add('open');
-    playBirthdaySong();
-  }
+  if(opened) return;
+  opened = true;
+  card.classList.add('open');
+  bdaySong.play().catch(()=>{});  // fire immediately on the click
+  playBirthdaySong();
+}
   coverFace.addEventListener('click', openCard);
 
   const bdaySong = document.getElementById('bdaySong');
