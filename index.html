@@ -591,46 +591,49 @@
   const card = document.getElementById('card');
   const coverFace = document.getElementById('coverFace');
   let opened = false;
+const bdaySong = document.getElementById('bdaySong');
 
-  function openCard(){
+function openCard(){
   if(opened) return;
   opened = true;
   card.classList.add('open');
-  bdaySong.play().catch(()=>{});  // fire immediately on the click
-  playBirthdaySong();
+
+  // .play() fires immediately, synchronously, inside the click handler —
+  // this is what makes browsers honor it as a real user gesture.
+  bdaySong.volume = 0;
+  const playPromise = bdaySong.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(()=>{ /* autoplay blocked */ });
+  }
+
+  seekAndFade(151);
 }
-  coverFace.addEventListener('click', openCard);
 
-  const bdaySong = document.getElementById('bdaySong');
-  function startAt(seconds) {
-    seconds = Number(seconds) || 0;
-    function doSeek() {
-      if (!isNaN(bdaySong.duration)) seconds = Math.min(seconds, bdaySong.duration);
-      bdaySong.currentTime = Math.max(0, seconds);
-      bdaySong.volume = 0;
-      bdaySong.play().catch(()=>{ /* autoplay blocked — user gesture required on some browsers */ });
+coverFace.addEventListener('click', openCard);
 
-      const fadeDuration = 2000;
-      const targetVolume = 0.6;
-      const fadeStart = performance.now();
+function seekAndFade(seconds) {
+  seconds = Number(seconds) || 0;
 
-      function fadeIn() {
-        const elapsed = performance.now() - fadeStart;
-        const progress = Math.min(elapsed / fadeDuration, 1);
-        bdaySong.volume = targetVolume * progress;
-        if (progress < 1) requestAnimationFrame(fadeIn);
-      }
+  function doSeek() {
+    if (!isNaN(bdaySong.duration)) seconds = Math.min(seconds, bdaySong.duration);
+    bdaySong.currentTime = Math.max(0, seconds);
 
-      requestAnimationFrame(fadeIn);
-      bdaySong.removeEventListener('canplay', doSeek);
+    const fadeDuration = 2000;
+    const targetVolume = 0.6;
+    const fadeStart = performance.now();
+    function fadeIn() {
+      const elapsed = performance.now() - fadeStart;
+      const progress = Math.min(elapsed / fadeDuration, 1);
+      bdaySong.volume = targetVolume * progress;
+      if (progress < 1) requestAnimationFrame(fadeIn);
     }
-    if (bdaySong.readyState >= 2) doSeek();
-    else bdaySong.addEventListener('canplay', doSeek);
+    requestAnimationFrame(fadeIn);
+    bdaySong.removeEventListener('canplay', doSeek);
   }
 
-  function playBirthdaySong(startSeconds = 151){
-    startAt(startSeconds);
-  }
+  if (bdaySong.readyState >= 2) doSeek();
+  else bdaySong.addEventListener('canplay', doSeek);
+}
 
   const startBtn = document.getElementById('startBtn');
   if (startBtn) {
